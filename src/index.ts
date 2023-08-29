@@ -1,14 +1,20 @@
-import express, { Express, Request, Response } from 'express';
-const dotenv = require('dotenv');
+import { myLogger } from './logger/logger';
+import express from 'express';
+import users from './routers/users';
+import { devConfig } from './config';
+import cors from 'cors';
+import { error500Middleware } from './middlewares/errors';
 
-dotenv.config();
+const app = express();
+const port = devConfig.port;
 
-const app: Express = express();
-const port = process.env.PORT;
+app.use(cors());
+app.use(express.json());
 
-app.get('/', (req: Request, res: Response) => {
-  res.send('Express + TypeScript Server');
-});
+app.use(myLogger);
+app.use('/users', users);
+
+app.use(error500Middleware);
 
 app.listen(port, () => {
   console.log(`[server]: Server is running at http://localhost:${port}`);
