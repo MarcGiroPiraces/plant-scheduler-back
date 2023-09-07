@@ -1,4 +1,9 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
+import { ErrorHandler } from '../models/errors';
 
-export const error500Middleware = (err: Error, _req: Request, res: Response) =>
-  res.status(500).send(err.message);
+export const errorMiddleware = (
+  err: ErrorHandler,
+  _req: Request,
+  res: Response,
+  _next: NextFunction,
+) => res.status(err.status).send(err.message);

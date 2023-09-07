@@ -14,17 +14,27 @@ export const registerUserQuery: string = `
   VALUES (?, ?, ?)
   `;
 
-export const getLastInsertUserIdQuery: string = `
-  SELECT LAST_INSERT_ID() as id
+export const getUserByIdQuery: string = `
+  SELECT *
+  FROM users
+  WHERE id = ?
   `;
 
-export const getUserByIdQuery: string = `
+export const getUserPasswordByEmailQuery: string = `
   SELECT
     id,
-    name,
-    email,
-    createdAt,
-    updatedAt
+    password
   FROM users
+  WHERE email = ?
+  `;
+
+export const updateUserQuery: string = `
+  UPDATE users
+  SET name = ?, email = ?, password = ?, updatedAt = NOW()
+  WHERE id = ?
+  `;
+
+export const deleteUserQuery: string = `
+  DELETE FROM users
   WHERE id = ?
   `;

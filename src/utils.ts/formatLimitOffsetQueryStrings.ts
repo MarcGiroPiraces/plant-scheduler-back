@@ -1,5 +1,5 @@
 import * as mysql from 'mysql2/promise';
-import { DefaultQueryParams } from '../models/users';
+import { DefaultQueryParams } from '../models/general';
 
 export const formatLimitOffsetQueryStrings = (
   requestParams: DefaultQueryParams,

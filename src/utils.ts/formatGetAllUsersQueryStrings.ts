@@ -1,8 +1,8 @@
-import { DefaultQueryParams } from '../models/users';
 import * as mysql from 'mysql2/promise';
+import { GetAllUsersFilterParams } from '../models/users';
 
 export const formatGetAllUsersQueryStrings = (
-  defaultParams: DefaultQueryParams,
+  defaultParams: GetAllUsersFilterParams,
 ) => {
   const paramsKeys = Object.entries(defaultParams);
   let query = '';

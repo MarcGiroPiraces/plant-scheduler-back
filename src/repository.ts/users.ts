@@ -4,86 +4,117 @@ import {
   RegisterUserRequest,
   RegisterUserResponse,
   User,
+  UserIdAndPassword,
 } from '../models/users';
 import {
+  deleteUserQuery,
   getAllUsersQuery,
-  getLastInsertUserIdQuery,
   getUserByIdQuery,
+  getUserPasswordByEmailQuery,
   registerUserQuery,
+  updateUserQuery,
 } from '../queries/users';
 import { RowDataPacket } from 'mysql2/promise';
 import * as mysql from 'mysql2/promise';
 import { formatLimitOffsetQueryStrings } from '../utils.ts/formatLimitOffsetQueryStrings';
 import { formatGetAllUsersQueryStrings } from '../utils.ts/formatGetAllUsersQueryStrings';
+import { getLastInsertedIdQuery } from '../queries/general';
 
 export const getAllUsersfromDb = async (
   filterParams: GetAllUsersQueryParams,
-): Promise<Array<RegisterUserResponse> | void> => {
-  try {
-    let query = getAllUsersQuery;
-    let defaultQueryParamsQuery = '';
-    let filterQueryParamsQuery = '';
-    if (filterParams) {
-      const { limit, offset, ...rest } = filterParams;
-      if (limit || offset) {
-        defaultQueryParamsQuery = formatLimitOffsetQueryStrings({
-          limit: limit,
-          offset: offset,
-        });
-      }
-
-      if (rest) {
-        filterQueryParamsQuery = formatGetAllUsersQueryStrings(rest);
-      }
-      query = mysql.format(
-        `${query} ${filterQueryParamsQuery} ${defaultQueryParamsQuery}`,
-      );
+): Promise<Array<RegisterUserResponse> | Error> => {
+  let query = getAllUsersQuery;
+  let defaultQueryParamsQuery = '';
+  let filterQueryParamsQuery = '';
+  if (filterParams) {
+    const { limit, offset, ...rest } = filterParams;
+    if (limit || offset) {
+      defaultQueryParamsQuery = formatLimitOffsetQueryStrings({
+        limit: limit,
+        offset: offset,
+      });
     }
 
-    const connection = await connectToDatabase();
-
-    const [rows] = await connection.execute<RowDataPacket[]>(query);
-    connection.end();
-
-    return rows as Array<RegisterUserResponse>;
-  } catch (error) {
-    throw new Error(error as string);
+    if (rest) {
+      filterQueryParamsQuery = formatGetAllUsersQueryStrings(rest);
+    }
+    query = mysql.format(
+      `${query} ${filterQueryParamsQuery} ${defaultQueryParamsQuery}`,
+    );
   }
+
+  const connection = await connectToDatabase();
+  const [rows] = await connection.execute<RowDataPacket[]>(query);
+  connection.end();
+
+  return rows as Array<RegisterUserResponse>;
 };
 
 export const registerUserToDb = async (
   user: RegisterUserRequest,
-): Promise<void | number> => {
-  try {
-    const connection = await connectToDatabase();
-    const query = registerUserQuery;
-    const { name, email, password } = user;
+): Promise<number> => {
+  const query = registerUserQuery;
+  const { name, email, password } = user;
+  const connection = await connectToDatabase();
 
-    await connection.execute(query, [name, email, password]);
-    const [rows] = await connection.execute<RowDataPacket[]>(
-      getLastInsertUserIdQuery,
-    );
+  await connection.execute(query, [name, email, password]);
+  const [rows] = await connection.execute<RowDataPacket[]>(
+    getLastInsertedIdQuery,
+  );
 
-    connection.end();
-    const lastRegisteredUserId = rows[0].id as number;
+  connection.end();
+  const lastRegisteredUserId = rows[0].id as number;
 
-    return lastRegisteredUserId;
-  } catch (error: any) {
-    return error.message;
-  }
+  return lastRegisteredUserId;
 };
 
-export const getUserById = async (id: number): Promise<User | void> => {
-  try {
-    const connection = await connectToDatabase();
-    const query = getUserByIdQuery;
+export const getUserById = async (id: number): Promise<User> => {
+  const query = getUserByIdQuery;
+  const connection = await connectToDatabase();
 
-    const [rows] = await connection.execute<RowDataPacket[]>(query, [id]);
-    connection.end();
+  const [rows] = await connection.execute<RowDataPacket[]>(query, [id]);
+  connection.end();
 
-    const user = rows[0] as User;
-    return user;
-  } catch (error) {
-    console.log(error);
-  }
+  const user = rows[0] as User;
+  return user;
+};
+
+export const getUserPasswordByEmail = async (
+  email: string,
+): Promise<UserIdAndPassword> => {
+  const query = getUserPasswordByEmailQuery;
+
+  const connection = await connectToDatabase();
+  const [rows] = await connection.execute<RowDataPacket[]>(query, [email]);
+  connection.end();
+
+  const user = rows[0] as UserIdAndPassword;
+  return user;
+};
+
+export const updateUserToDb = async (
+  user: User,
+  id: number,
+): Promise<number> => {
+  const query = updateUserQuery;
+  const { name, email, password } = user;
+  const connection = await connectToDatabase();
+
+  await connection.execute(query, [name, email, password, id]);
+  const [rows] = await connection.execute<RowDataPacket[]>(
+    getLastInsertedIdQuery,
+  );
+  connection.end();
+
+  return rows[0].id as number;
+};
+
+export const deleteUserFromDb = async (id: number): Promise<number> => {
+  const query = deleteUserQuery;
+  const connection = await connectToDatabase();
+
+  await connection.execute(query, [id]);
+  connection.end();
+
+  return id;
 };

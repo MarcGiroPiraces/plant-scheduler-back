@@ -1,32 +1,40 @@
-import express, { Request, Response } from 'express';
-import { GetAllUsersQueryParams, RegisterUserRequest } from '../models/users';
-import { getAllUsers, registerUser } from '../controllers/users';
-import { checkCreateUserBodyMiddleware } from '../middlewares/users';
+import express from 'express';
+import {
+  deleteUser,
+  getAllUsers,
+  loginUser,
+  registerUser,
+  updateUser,
+} from '../controllers/users';
+import {
+  checkUserLoginCredentialsMiddleware,
+  checkCreateUserBodyMiddleware,
+  checkLoginUserBodyMiddleware,
+  checkUniqueEmailMiddleware,
+  checkUpdateUserBodyMiddleware,
+} from '../middlewares/users';
+import { auth } from '../middlewares/auth';
 
 export const router = express.Router();
 
-router.get(
-  '/',
-  async (
-    req: Request<any, any, any, GetAllUsersQueryParams>,
-    res: Response,
-  ) => {
-    const queryParams = req.query;
-
-    const users = await getAllUsers(queryParams);
-
-    return res.send(users);
-  },
-);
+router.get('/', auth, getAllUsers);
 
 router.post(
   '/register',
   checkCreateUserBodyMiddleware,
-  async (req: Request, res: Response) => {
-    const user: RegisterUserRequest = req.body;
-    const registeredUser = await registerUser(user);
-    return res.send(registeredUser);
-  },
+  checkUniqueEmailMiddleware,
+  registerUser,
 );
+
+router.post(
+  '/login',
+  checkLoginUserBodyMiddleware,
+  checkUserLoginCredentialsMiddleware,
+  loginUser,
+);
+
+router.put('/', auth, checkUpdateUserBodyMiddleware, updateUser);
+
+router.delete('/', auth, deleteUser);
 
 export default router;
