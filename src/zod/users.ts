@@ -14,3 +14,21 @@ export const RegisterUserSchema = UserSchema.omit({
   createdAt: true,
   updatedAt: true,
 });
+
+export const LoginUserSchema = UserSchema.pick({
+  email: true,
+  password: true,
+});
+
+export const UserIdAndEmailSchema = UserSchema.pick({
+  id: true,
+  email: true,
+});
+
+export const UpdateUserSchema = UserSchema.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+})
+  .partial()
+  .merge(z.object({ userId: z.number().int().positive() }));
